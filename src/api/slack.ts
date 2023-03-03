@@ -94,52 +94,38 @@ export class SlackClient {
 		});
 	}
 
-	// FIXME(janne): add request validation
-	async getEvent(request: Request): Promise<SlackEvent> {
-		return await request.json<SlackEvent>();
+	async getEvent(body: string): Promise<SlackEvent> {
+		return await JSON.parse(body);
 	}
 
-	/*
-	async validateRequest(request: Request): Promise<boolean> {
-		const timestamp = request.headers.get('x-slack-request-timestamp')
+	async validateRequest(headers: Headers, body: string): Promise<boolean> {
+		const timestamp = headers.get('x-slack-request-timestamp');
 
-		// remove starting 'v0=' from the signature header
-		const signatureStr = request.headers.get('x-slack-signature')?.substring(3)
-		console.log(signatureStr)
-		if (!signatureStr) return false
+		// remove the version prefix from signature
+		const signatureStr = headers.get('x-slack-signature')?.substring(3);
+		if (!signatureStr) {
+			return false;
+		}
 
-		const signature = hexToBytes(signatureStr)
-		console.log(this.signingSecret);
+		const signature = signatureToBytes(signatureStr);
+		const authString = `${this.signatureVersion}:${timestamp}:${body}`;
 
-		const content = await request.text()
-		const authString = `${this.signatureVersion}:${timestamp}:${content}`
-		let encoder = new TextEncoder()
+		const encoder = new TextEncoder();
 		const key = await crypto.subtle.importKey(
 			'raw',
 			encoder.encode(this.signingSecret),
 			{ name: 'HMAC', hash: 'SHA-256' },
 			false,
 			['verify']
-		)
-		const verified = await crypto.subtle.verify(
-			"HMAC",
-			key,
-			signature,
-			encoder.encode(authString)
-		)
-
-		console.log(verified);
-
-		return verified
+		);
+		return await crypto.subtle.verify('HMAC', key, signature, encoder.encode(authString));
 	}
-
-	 */
 }
 
-function hexToBytes(hex: string) {
-	const bytes = new Uint8Array(hex.length / 2);
-	for (let c = 0; c < hex.length; c += 2) {
-		bytes[c / 2] = parseInt(hex.substring(c, 2), 16);
+const signatureToBytes = (signature: string) => {
+	const bytes = new Uint8Array(signature.length / 2);
+	for (let c = 0; c < signature.length; c += 2) {
+		bytes[c / 2] = parseInt(signature.substring(c, c + 2), 16);
 	}
 	return bytes.buffer;
-}
+};

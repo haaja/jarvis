@@ -15,29 +15,28 @@ export class Bot {
 		this.slackClient = slackClient;
 	}
 
-	// FIXME(janne): add request validation
-	async handleEvents(request: Request): Promise<Response> {
-		/*
-		if (! await this.slackClient.validateRequest(request)) {
-			const body = JSON.stringify({ error: 'invalid request'})
+	async handleRequest(request: Request, context: ExecutionContext): Promise<Response> {
+		const body = await request.text();
+		const validRequest = await this.slackClient.validateRequest(request.headers, body);
+		if (!validRequest) {
+			const body = JSON.stringify({ error: 'invalid signature' });
 			return new Response(body, {
 				headers: {
 					'content-type': 'application/json',
 				},
 				status: 400,
 				statusText: 'Bad Request',
-			})
+			});
 		}
-		 */
 
-		const event: SlackEvent = await this.slackClient.getEvent(request);
+		const event: SlackEvent = await this.slackClient.getEvent(body);
 		if (event.type === 'url_verification') {
 			return this.slackClient.handleChallenge(event);
 		}
 
 		context.waitUntil(this.respond(event));
-		const body = JSON.stringify({ status: 'ok' });
-		return new Response(body, {
+		const responseBody = JSON.stringify({ status: 'ok' });
+		return new Response(responseBody, {
 			headers: {
 				'content-type': 'application/json',
 			},
