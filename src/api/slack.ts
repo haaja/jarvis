@@ -7,6 +7,7 @@ export interface SlackEvent {
 		ts: string;
 		channel: string;
 		event_ts: string;
+		thread_ts?: string;
 	};
 	token?: string;
 	team_id?: string;
@@ -50,14 +51,14 @@ export class SlackClient {
 		this.signingSecret = signingKey;
 	}
 
-	async sendMessage(channel: string, message: string, timestamp?: string): Promise<void> {
+	async sendMessage(channel: string, message: string, threadTs?: string): Promise<void> {
 		const url = `${this.baseURL}/chat.postMessage`;
 
-		const payload = timestamp
+		const payload = threadTs
 			? {
 					channel: channel,
 					text: message,
-					thread_ts: timestamp,
+					thread_ts: threadTs,
 			  }
 			: {
 					channel: channel,

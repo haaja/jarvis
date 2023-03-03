@@ -35,20 +35,7 @@ export class Bot {
 			return this.slackClient.handleChallenge(event);
 		}
 
-		const { event: subEvent } = event;
-
-		console.log(subEvent);
-
-		if (subEvent && subEvent.type === 'app_mention') {
-			const { channel, text } = subEvent;
-			const msg: Message = {
-				role: 'assistant',
-				content: text,
-			};
-			const reply = await this.openaiClient.sendQuery([baseMessage, msg]);
-			await this.slackClient.sendMessage(channel, reply.content);
-		}
-
+		context.waitUntil(this.respond(event));
 		const body = JSON.stringify({ status: 'ok' });
 		return new Response(body, {
 			headers: {
@@ -57,5 +44,19 @@ export class Bot {
 			status: 200,
 			statusText: 'ok',
 		});
+	}
+
+	async respond(event: SlackEvent): Promise<void> {
+		const { event: subEvent } = event;
+
+		if (subEvent && subEvent.type === 'app_mention') {
+			const { channel, text, thread_ts } = subEvent;
+			const msg: Message = {
+				role: 'assistant',
+				content: text,
+			};
+			const reply = await this.openaiClient.sendQuery([baseMessage, msg]);
+			await this.slackClient.sendMessage(channel, reply.content, thread_ts);
+		}
 	}
 }

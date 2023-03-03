@@ -10,7 +10,7 @@ interface Environment {
 }
 
 export default {
-	async fetch(request: Request, env: Environment) {
+	async fetch(request: Request, env: Environment, ctx: ExecutionContext) {
 		const url = new URL(request.url);
 
 		if (request.method !== 'POST') {
@@ -23,14 +23,13 @@ export default {
 				statusText: 'Not Found',
 			});
 		}
-
 		switch (url.pathname) {
 			case '/events':
 				const bot = new Bot(
 					new OpenAIClient(env.OPENAI_API_KEY),
 					new SlackClient(env.SLACK_BOT_TOKEN, env.SLACK_SIGNING_SECRET)
 				);
-				return await bot.handleEvents(request);
+				return await bot.handleRequest(request, ctx);
 			default:
 				return new Response('not found', {
 					status: 404,
