@@ -66,7 +66,7 @@ export class SlackClient {
 			  };
 		const headers = {
 			'Content-Type': 'application/json',
-			'Authorization': `Bearer ${this.botToken}`,
+			Authorization: `Bearer ${this.botToken}`,
 		};
 
 		const response = await fetch(url, {

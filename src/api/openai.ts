@@ -65,7 +65,7 @@ export class OpenAIClient {
 		};
 
 		const headers = {
-			'Authorization': `Bearer ${this.token}`,
+			Authorization: `Bearer ${this.token}`,
 			'content-type': 'application/json',
 		};
 
