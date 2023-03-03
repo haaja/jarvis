@@ -1,5 +1,3 @@
-import { d } from 'vitest/dist/index-220c1d70';
-
 export interface Message {
 	role: 'system' | 'user' | 'assistant';
 	content: string;
